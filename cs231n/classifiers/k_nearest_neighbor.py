@@ -1,5 +1,6 @@
 from builtins import range
 from builtins import object
+from joblib import parallel_backend
 import numpy as np
 from past.builtins import xrange
 
@@ -76,7 +77,7 @@ class KNearestNeighbor(object):
                 # not use a loop over dimension, nor use np.linalg.norm().          #
                 #####################################################################
                 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+                dists[i, j] = np.sqrt(np.sum(np.square(self.X_train[j] - X[i])))
                 pass
 
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -101,6 +102,9 @@ class KNearestNeighbor(object):
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+            dis = X[i] - self.X_train
+            dist = np.sqrt(np.sum(np.square(dis), axis=1))
+            dists[i, :] = dist
             pass
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -131,6 +135,10 @@ class KNearestNeighbor(object):
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+        # dis = X.reshape(500, 1, 3072) - self.X_train.reshape(1, 5000, 3072)
+        # dists = np.sqrt(np.sum(np.square(dis), axis=2))
+        # 上述方式占内存太大，要10分钟以上
+        dists = np.sqrt(np.sum(np.square(X), axis=1, keepdims=True) + np.sum(np.square(self.X_train), axis=1, keepdims=True).transpose() - 2 * np.dot(X, self.X_train.transpose()))
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -163,7 +171,10 @@ class KNearestNeighbor(object):
             # Hint: Look up the function numpy.argsort.                             #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+            closest = np.argsort(dists[i])[:k]
+            # print(closest.shape)
+            closest_y = self.y_train[closest]
+            # print(closest_y.shape)
             pass
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -177,7 +188,7 @@ class KNearestNeighbor(object):
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             pass
-
+            y_pred[i] = np.argmax(np.bincount(closest_y))
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        
         return y_pred
